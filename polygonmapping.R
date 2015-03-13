@@ -32,15 +32,15 @@ coords$lat<-as.numeric(as.character(coords$lat))
 require(ggmap)
 cphmap <- get_googlemap("copenhagen",zoom=13)
 
-#plot polygon
+#plot polygons
 ggmap(cphmap) +
   geom_point(aes(x=lon,y=lat,group=id),data=coords,color="magenta") +
   geom_polygon(aes(x=lon,y=lat,group=id),data=coords,alpha=.2,fill="magenta")
 
 ggsave("polygonmap.pdf")
+ggsave("polygonmap.png")
 
 #export coordinates to shapefile
-
 require(maptools)
 require(rgdal)
 require(sp)
@@ -60,7 +60,6 @@ for (i in unique(coords$id)){
 #set projection
 coordinates(coords.sp) <- ~lon+lat
 proj4string(coords.sp) <- CRS("+proj=longlat +datum=WGS84")
-
 
 #points to list of N polygons
 for (i in unique(coords.sp$id)){
@@ -89,7 +88,7 @@ shpcoords <- spTransform(shpcoords, CRS("+proj=longlat +datum=WGS84"))
 #convert shapefile to plotable data
 shpcoordsdf <- fortify(shpcoords)
 
-#plot polygon 
+#plot polygons 
 ggmap(cphmap) +
   geom_point(aes(x=long,y=lat,group=id),data=shpcoordsdf,color="magenta") +
   geom_polygon(aes(x=long,y=lat,group=id),data=shpcoordsdf,alpha=.2,fill="magenta")
