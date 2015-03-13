@@ -30,32 +30,45 @@ ggmap(cphmap) +
 ggsave("polygonmap.pdf")
 
 #export coordinates to shapefile
+
 require(maptools)
 require(rgdal)
 require(sp)
 
 #set projection
-coords.sp<-coords
+coords.sp<-rbind(coords,head(coords,1)) #repeats the first point at the end
 coordinates(coords.sp) <- ~lon+lat
 proj4string(coords.sp) <- CRS("+proj=longlat +datum=WGS84")
 
+
+#points to polygon
+coords.polygon<-Polygon(coords.sp,hole=F)
+
+#polygon to spatial polygons data frame
+coords.spdf <- coords.polygon %>%
+  list() %>%
+  Polygons(1) %>%
+  list() %>%
+  SpatialPolygons() %>%
+  SpatialPolygonsDataFrame(data=data.frame(f=99.9))
+  
 #convert to spatialpointsdataframe
-coords.spdf <- SpatialPointsDataFrame(coords.sp, data.frame(id=1:nrow(coords)))
+#coords.spdf <- SpatialPointsDataFrame(coords.sp, data.frame(id=1:nrow(coords)))
 
 #write out to shapefile
-writePointsShape(coords.spdf,"coords.shp")
+writePolyShape(coords.spdf,"coords.shp")
 
 #read back in from shapefile
 shpcoords <- readOGR(".","coords")
 proj4string(shpcoords) <- CRS("+proj=longlat +datum=WGS84")
 shpcoords <- spTransform(shpcoords, CRS("+proj=longlat +datum=WGS84"))
 
-#read points in from data
-shpcoordsdf<-as(shpcoords,"data.frame")
+#convert shapefile to plotable data
+shpcoordsdf <- fortify(shpcoords)
 
 #plot polygon 
 ggmap(cphmap) +
-  geom_point(aes(x=lon,y=lat),data=shpcoordsdf,color="magenta") +
-  geom_polygon(aes(x=lon,y=lat),data=shpcoordsdf,alpha=.2,fill="magenta")
+  geom_point(aes(x=long,y=lat),data=shpcoordsdf,color="magenta") +
+  geom_polygon(aes(x=long,y=lat),data=shpcoordsdf,alpha=.2,fill="magenta")
 
 ggsave("polygonmap_fromshapefile.pdf")
