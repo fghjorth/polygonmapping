@@ -1,5 +1,5 @@
 # Plotting and converting polygon data in R
-This repo containts R code for reading in sets of lat/long pairs, plotting as polygons, and exporting polygons to shapefile format.
+This repo contains R code for reading in sets of lat/long pairs, plotting as polygons, and exporting polygons to shapefile format.
 
 The input is a string of lat/long pairs for each respondent as such:
 
