@@ -12,7 +12,7 @@ for (i in 1:length(latlongs$idno)){
     unlist()
   coords <- matrix(coords,ncol=2,nrow=length(coords)/2,byrow=T) %>%
     as.data.frame()
-  coords$id<-i
+  coords$id<-latlongs$idno[i]
   if (i==1){
     coordsdf1<-coords
   }
@@ -30,7 +30,7 @@ coords$lat<-as.numeric(as.character(coords$lat))
 
 #get map of copenhagen
 require(ggmap)
-cphmap <- get_googlemap("copenhagen",zoom=13)
+cphmap <- get_googlemap("copenhagen",zoom=13,scale=2)
 
 #plot polygons
 ggmap(cphmap) +
@@ -46,8 +46,8 @@ require(rgdal)
 require(sp)
 
 #repeat first point at the end of each polygon - shapefiles need this
-for (i in unique(coords$id)){
-  coordsi<-subset(coords,id==i)
+for (i in 1:length(unique(coords$id))){
+  coordsi<-subset(coords,id==unique(coords$id)[i])
   coordsi<-rbind(coordsi,head(coordsi,1))
   if (i==1){
     coords.sp<-coordsi
@@ -62,20 +62,23 @@ coordinates(coords.sp) <- ~lon+lat
 proj4string(coords.sp) <- CRS("+proj=longlat +datum=WGS84")
 
 #points to list of N polygons
-for (i in unique(coords.sp$id)){
-  coords.spi<-subset(coords.sp,id==i)
+for (i in 1:length(unique(coords.sp$id))){
+  coords.spi<-subset(coords.sp,id==unique(coords.sp$id)[i])
   if (i==1){
-    coords.polygon<-Polygons(list(Polygon(coords.spi,hole=F)),ID=paste(i))
+    coords.polygon<-Polygons(list(Polygon(coords.spi[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i]))
   }
   if (i>1){
-    coords.polygon<-c(coords.polygon,Polygons(list(Polygon(coords.spi,hole=F)),ID=paste(i)))
+    coords.polygon<-c(coords.polygon,Polygons(list(Polygon(coords.spi[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i])))
   }
 }
 
 #gather list of polygons in a spatial polygons data frame
+spdf<-data.frame(f=rep(99.9,length(coords.polygon)))
+row.names(spdf)<-unique(coords.sp$id)
+
 coords.spdf <- coords.polygon %>%
   SpatialPolygons() %>% 
-  SpatialPolygonsDataFrame(data=data.frame(f=rep(99.9,length(coords.polygon))))
+  SpatialPolygonsDataFrame(data=spdf)
 
 #write out to shapefile
 writePolyShape(coords.spdf,"coords.shp")
@@ -84,6 +87,9 @@ writePolyShape(coords.spdf,"coords.shp")
 shpcoords <- readOGR(".","coords")
 proj4string(shpcoords) <- CRS("+proj=longlat +datum=WGS84")
 shpcoords <- spTransform(shpcoords, CRS("+proj=longlat +datum=WGS84"))
+
+#assign the right ID's to the shapefile
+row.names(shpcoords)<-as.character(shpcoords@data$SP_ID)
 
 #convert shapefile to plotable data
 shpcoordsdf <- fortify(shpcoords)
