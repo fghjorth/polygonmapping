@@ -15,6 +15,7 @@ plotPolygons<-function(var,maparea,zoomlevel=7){
   for (i in 1:nrow(td)){
     if (coordsvar[i]!=""){
       coordsi<-coordsvar[i] %>%
+        gsub(" ","",.) %>%
         gsub("#",";",.) %>%
         strsplit(.,";") %>%
         extract2(1) %>%
