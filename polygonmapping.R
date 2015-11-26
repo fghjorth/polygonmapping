@@ -6,6 +6,10 @@ latlongs<-read.table("latlongdata.txt",sep=";",header=T)
 
 #long form data frame of lat long pairs
 require(dplyr)
+
+#get only the nhood from østerbro
+latlongs<-subset(latlongs,idno==2100)
+
 for (i in 1:length(latlongs$idno)){
   coords <- strsplit(as.character(latlongs$neighborhood[i]),split=";")[[1]] %>%  
     strsplit(split=",") %>%
@@ -30,7 +34,7 @@ coords$lat<-as.numeric(as.character(coords$lat))
 
 #get map of copenhagen
 require(ggmap)
-cphmap <- get_googlemap("copenhagen",zoom=13,scale=2)
+cphmap <- get_googlemap("studsgaardsgade, copenhagen",zoom=15,scale=2)
 
 #plot polygons
 ggmap(cphmap) +
@@ -65,10 +69,10 @@ proj4string(coords.sp) <- CRS("+proj=longlat +datum=WGS84")
 for (i in 1:length(unique(coords.sp$id))){
   coords.spi<-subset(coords.sp,id==unique(coords.sp$id)[i])
   if (i==1){
-    coords.polygon<-Polygons(list(Polygon(coords.spi[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i]))
+    coords.polygon<-Polygons(list(Polygon(coords.spi@coords[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i]))
   }
   if (i>1){
-    coords.polygon<-c(coords.polygon,Polygons(list(Polygon(coords.spi[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i])))
+    coords.polygon<-c(coords.polygon,Polygons(list(Polygon(coords.spi@coords[,1:2],hole=F)),ID=paste(unique(coords.sp$id)[i])))
   }
 }
 
@@ -77,6 +81,7 @@ spdf<-data.frame(f=rep(99.9,length(coords.polygon)))
 row.names(spdf)<-unique(coords.sp$id)
 
 coords.spdf <- coords.polygon %>%
+  list() %>%
   SpatialPolygons() %>% 
   SpatialPolygonsDataFrame(data=spdf)
 
