@@ -8,7 +8,7 @@ latlongs<-read.table("latlongdata.txt",sep=";",header=T)
 require(dplyr)
 
 #get only the nhood from østerbro
-latlongs<-subset(latlongs,idno==2100)
+latlongs<-subset(latlongs,idno==2110)
 
 for (i in 1:length(latlongs$idno)){
   coords <- strsplit(as.character(latlongs$neighborhood[i]),split=";")[[1]] %>%  
@@ -34,7 +34,7 @@ coords$lat<-as.numeric(as.character(coords$lat))
 
 #get map of copenhagen
 require(ggmap)
-cphmap <- get_googlemap("studsgaardsgade, copenhagen",zoom=15,scale=2)
+cphmap <- get_googlemap("parken, copenhagen",zoom=15,scale=2)
 
 #plot polygons
 ggmap(cphmap) +
@@ -84,6 +84,10 @@ coords.spdf <- coords.polygon %>%
   list() %>%
   SpatialPolygons() %>% 
   SpatialPolygonsDataFrame(data=spdf)
+
+#get area of polygon(s)
+require(geosphere)
+areaPolygon(coords.spdf)
 
 #write out to shapefile
 writePolyShape(coords.spdf,"coords.shp")
